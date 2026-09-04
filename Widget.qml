@@ -771,7 +771,7 @@ BarWidget {
           bordered: true
           leftAlign: true
           active: root.playbackSessionsOpen
-          tooltipText: "Switch controls without moving audio"
+          tooltipText: "Control another independent Sonos session without moving, stopping, or combining audio"
           onClicked: root.playbackSessionsOpen = !root.playbackSessionsOpen
         }
 
