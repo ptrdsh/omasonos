@@ -14,6 +14,8 @@
   `x-rincon-mp3radio://http://` Sonos URI.
 - Add an idempotent UFW setup/removal helper and report a clear error when a
   speaker cannot connect to the fixed TCP `1499` stream.
+- Offer an in-panel, explicitly authorized UFW setup action and retry routing
+  automatically after the rules are added.
 - Show immediate connecting/stopping feedback while a routing request is in
   progress.
 

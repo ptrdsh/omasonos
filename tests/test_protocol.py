@@ -40,6 +40,9 @@ class FakeController:
     def stop_system_audio(self):
         self.calls.append(("stopSystemAudio",))
 
+    def configure_firewall_and_start_system_audio(self):
+        self.calls.append(("configureFirewallAndStartSystemAudio",))
+
 
 
 def decoded(output):
@@ -118,6 +121,17 @@ def test_system_audio_commands_are_dispatched():
     ]
     assert decoded(output)[0]["ok"] is True
     assert decoded(output)[2]["ok"] is True
+
+
+def test_firewall_setup_and_retry_is_dispatched():
+    controller = FakeController()
+    server = ProtocolServer(controller)  # type: ignore[arg-type]
+    output = io.StringIO()
+    server.handle({"id": "8", "op": "configureFirewallAndStartSystemAudio"}, output)
+    assert controller.calls == [
+        ("configureFirewallAndStartSystemAudio",), ("refresh", False)
+    ]
+    assert decoded(output)[0]["ok"] is True
 
 
 def test_refresh_exception_becomes_error_snapshot():

@@ -147,6 +147,11 @@ Item {
     systemAudioRequestedState = false
     systemAudioRequestId = sendCommand("stopSystemAudio")
   }
+  function configureFirewallAndStartSystemAudio() {
+    if (systemAudioRequestId !== "") return
+    systemAudioRequestedState = true
+    systemAudioRequestId = sendCommand("configureFirewallAndStartSystemAudio")
+  }
 
   function handleLine(line) {
     var text = String(line || "").trim()

@@ -25,6 +25,8 @@ The plugin does perform the following network and storage operations:
 - A local SoCo callback listener on TCP ports `1400-1499` for Sonos events.
 - When system-audio routing is enabled, an MP3 stream listener on TCP port
   `1499`. The supplied UFW helper limits access to discovered speaker IPs.
+  OmaSonos invokes that helper through `pkexec` only after the user clicks the
+  explicit **Allow speakers and retry** action.
 - HTTPS requests to TuneIn and podcast media hosts when starting a saved TuneIn
   podcast, plus artwork requests made by the QML image component.
 - First-run installation of hash-locked Python packages from the configured pip

@@ -86,7 +86,9 @@ No Sonos account credentials or cloud tokens are requested or stored.
 
 System-audio routing requires the active Sonos coordinator to connect back to
 this computer on TCP port `1499`. If UFW blocks incoming connections, first let
-OmaSonos discover the speakers and then run:
+OmaSonos discover the speakers. The controller then offers **Allow speakers and
+retry**, which opens the normal system authorization prompt and adds only the
+discovered speaker addresses. The equivalent terminal command is:
 
 ```bash
 ./scripts/configure-firewall.sh

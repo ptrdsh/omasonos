@@ -2,11 +2,14 @@ from __future__ import annotations
 
 import logging
 import hashlib
+import shutil
+import subprocess
 import time
 import unicodedata
 import xml.etree.ElementTree as ET
 from collections import defaultdict
 from collections.abc import Callable, Iterable
+from pathlib import Path
 from typing import Any
 from urllib.parse import unquote, urlsplit
 
@@ -1270,6 +1273,30 @@ class SonosController:
                 self._coordinator().stop()
             finally:
                 self.system_audio_router.stop()
+
+    def configure_firewall_and_start_system_audio(self) -> None:
+        if shutil.which("pkexec") is None or shutil.which("ufw") is None:
+            raise ControllerError(
+                "Automatic firewall setup requires pkexec and UFW. "
+                "See the OmaSonos firewall setup instructions."
+            )
+        hosts = sorted(set(self.state.cached_hosts))
+        if not hosts:
+            raise ControllerError("Refresh OmaSonos before configuring the firewall")
+        helper = Path(__file__).resolve().parents[1] / "scripts" / "configure-firewall.sh"
+        try:
+            result = subprocess.run(
+                ["pkexec", str(helper), "add", *hosts],
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
+        except subprocess.TimeoutExpired as exc:
+            raise ControllerError("Firewall authorization timed out") from exc
+        if result.returncode != 0:
+            detail = (result.stderr or result.stdout or "Authorization was cancelled").strip()
+            raise ControllerError(f"Could not configure the firewall: {detail}")
+        self.start_system_audio()
 
     def close(self) -> None:
         self.system_audio_router.stop()

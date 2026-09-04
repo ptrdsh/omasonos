@@ -127,6 +127,9 @@ class ProtocolServer:
             ),
             "startSystemAudio": lambda: self.controller.start_system_audio(),
             "stopSystemAudio": lambda: self.controller.stop_system_audio(),
+            "configureFirewallAndStartSystemAudio": lambda: (
+                self.controller.configure_firewall_and_start_system_audio()
+            ),
             "selectGroup": lambda: self.controller.select_group(
                 str(args.get("groupUid", ""))
             ),

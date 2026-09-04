@@ -16,6 +16,8 @@ BarWidget {
     ? serviceSnapshot.systemAudio : ({ active: false })
   readonly property bool systemAudioPending: !!sonos
     && sonos.systemAudioRequestId !== ""
+  readonly property bool firewallHelpNeeded: !!sonos
+    && String(sonos.lastError || "").indexOf("TCP port 1499") !== -1
   readonly property var target: serviceSnapshot ? serviceSnapshot.target : null
   readonly property string selectedRoomUid: serviceSnapshot
     ? String(serviceSnapshot.selectedAnchorRoomUid || "") : ""
@@ -616,6 +618,19 @@ BarWidget {
         wrapMode: Text.Wrap
         font.family: root.bar.fontFamily
         font.pixelSize: Style.font.bodySmall
+      }
+
+      Button {
+        width: parent.width
+        visible: root.online && root.firewallHelpNeeded
+        focusable: true
+        text: "Allow speakers and retry"
+        iconText: "󰒃"
+        foreground: root.bar.foreground
+        bordered: true
+        enabled: !root.systemAudioPending
+        tooltipText: "Authorize UFW access on TCP 1499 for discovered Sonos speakers only"
+        onClicked: root.sonos.configureFirewallAndStartSystemAudio()
       }
 
       Toggle {
