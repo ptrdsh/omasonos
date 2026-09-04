@@ -125,6 +125,8 @@ class ProtocolServer:
             "movePlaybackToRoom": lambda: self.controller.move_playback_to_room(
                 str(args.get("roomUid", ""))
             ),
+            "startSystemAudio": lambda: self.controller.start_system_audio(),
+            "stopSystemAudio": lambda: self.controller.stop_system_audio(),
             "selectGroup": lambda: self.controller.select_group(
                 str(args.get("groupUid", ""))
             ),
@@ -272,3 +274,6 @@ class ProtocolServer:
                 self.handle(request, output)
         finally:
             self.event_subscriptions.close()
+            close = getattr(self.controller, "close", None)
+            if close is not None:
+                close()

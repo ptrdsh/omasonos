@@ -34,6 +34,12 @@ class FakeController:
     def move_playback_to_room(self, room_uid):
         self.calls.append(("movePlaybackToRoom", room_uid))
 
+    def start_system_audio(self):
+        self.calls.append(("startSystemAudio",))
+
+    def stop_system_audio(self):
+        self.calls.append(("stopSystemAudio",))
+
 
 
 def decoded(output):
@@ -98,6 +104,20 @@ def test_move_playback_dispatches_dedicated_room_operation():
     )
     assert controller.calls == [("movePlaybackToRoom", "R2"), ("refresh", False)]
     assert decoded(output)[0]["ok"] is True
+
+
+def test_system_audio_commands_are_dispatched():
+    controller = FakeController()
+    server = ProtocolServer(controller)  # type: ignore[arg-type]
+    output = io.StringIO()
+    server.handle({"id": "6", "op": "startSystemAudio"}, output)
+    server.handle({"id": "7", "op": "stopSystemAudio"}, output)
+    assert controller.calls == [
+        ("startSystemAudio",), ("refresh", False),
+        ("stopSystemAudio",), ("refresh", False),
+    ]
+    assert decoded(output)[0]["ok"] is True
+    assert decoded(output)[2]["ok"] is True
 
 
 def test_refresh_exception_becomes_error_snapshot():

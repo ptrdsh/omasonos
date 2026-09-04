@@ -7,6 +7,7 @@ import sys
 
 from omasonos_backend.controller import SonosController
 from omasonos_backend.protocol import ProtocolServer
+from omasonos_backend.system_audio import SystemAudioRouter
 
 
 def main() -> int:
@@ -21,6 +22,7 @@ def main() -> int:
     signal.signal(signal.SIGTERM, stop_service)
     signal.signal(signal.SIGINT, stop_service)
     try:
+        SystemAudioRouter.recover_stale()
         ProtocolServer(SonosController()).serve()
     except KeyboardInterrupt:
         pass

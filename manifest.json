@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "io.github.ctl0v0.omasonos",
   "name": "OmaSonos",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "author": "ctl0v0",
   "license": "MIT",
-  "description": "Local-first Sonos control for the Omarchy bar",
+  "description": "Local-first Sonos control and system-audio routing for the Omarchy bar",
   "kinds": [
     "service",
     "bar-widget"
@@ -16,7 +16,7 @@
   },
   "barWidget": {
     "displayName": "OmaSonos",
-    "description": "Sonos now-playing, playback, volume, groups, and rooms",
+    "description": "Sonos now-playing, system audio, playback, volume, groups, and rooms",
     "category": "Media",
     "defaultSection": "right",
     "allowMultiple": false,

@@ -23,6 +23,8 @@ The plugin does perform the following network and storage operations:
 - A rate-limited scan of attached private IPv4 networks when normal discovery
   and cached addresses both fail.
 - A local SoCo callback listener on TCP ports `1400-1499` for Sonos events.
+- When system-audio routing is enabled, an MP3 stream listener on TCP port
+  `1499`. The supplied UFW helper limits access to discovered speaker IPs.
 - HTTPS requests to TuneIn and podcast media hosts when starting a saved TuneIn
   podcast, plus artwork requests made by the QML image component.
 - First-run installation of hash-locked Python packages from the configured pip

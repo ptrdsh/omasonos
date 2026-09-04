@@ -30,7 +30,8 @@ Item {
       availableActions: [],
       metadataState: "empty",
       stale: false
-    }
+    },
+    systemAudio: { active: false, roomLabel: "", url: "" }
   })
   property string commandError: ""
   property string processError: ""
@@ -49,6 +50,8 @@ Item {
   property string favoriteError: ""
   property string moveRequestId: ""
   property string moveError: ""
+  property string systemAudioRequestId: ""
+  property bool systemAudioRequestedState: false
 
   readonly property bool ready: backendReady && snapshot && snapshot.status && snapshot.status.state === "ready"
   readonly property var playback: snapshot && snapshot.playback ? snapshot.playback : ({})
@@ -134,6 +137,16 @@ Item {
   function setRoomVolume(roomUid, volume) { sendCommand("setRoomVolume", { roomUid: roomUid, volume: volume }) }
   function setRoomMute(roomUid, mute) { sendCommand("setRoomMute", { roomUid: roomUid, mute: !!mute }) }
   function applyMembers(roomUids) { sendCommand("applyMembers", { roomUids: roomUids }) }
+  function startSystemAudio() {
+    if (systemAudioRequestId !== "") return
+    systemAudioRequestedState = true
+    systemAudioRequestId = sendCommand("startSystemAudio")
+  }
+  function stopSystemAudio() {
+    if (systemAudioRequestId !== "") return
+    systemAudioRequestedState = false
+    systemAudioRequestId = sendCommand("stopSystemAudio")
+  }
 
   function handleLine(line) {
     var text = String(line || "").trim()
@@ -154,6 +167,7 @@ Item {
       setupFailed = false
       restartAttempt = 0
       processError = ""
+      systemAudioRequestId = ""
       if (favoriteAwaitingSnapshot) {
         favoriteAwaitingSnapshot = false
         favoriteStartingTitle = ""
@@ -164,6 +178,8 @@ Item {
     }
     if (message.type === "result" && message.ok === false) {
       commandError = String(message.error || "Sonos command failed")
+      if (String(message.id || "") === systemAudioRequestId)
+        systemAudioRequestId = ""
       if (String(message.id || "") === moveRequestId) {
         moveError = commandError
         moveRequestId = ""

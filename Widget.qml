@@ -12,6 +12,10 @@ BarWidget {
   readonly property var serviceSnapshot: sonos && sonos.snapshot ? sonos.snapshot : null
   readonly property var playback: serviceSnapshot && serviceSnapshot.playback
     ? serviceSnapshot.playback : ({})
+  readonly property var systemAudio: serviceSnapshot && serviceSnapshot.systemAudio
+    ? serviceSnapshot.systemAudio : ({ active: false })
+  readonly property bool systemAudioPending: !!sonos
+    && sonos.systemAudioRequestId !== ""
   readonly property var target: serviceSnapshot ? serviceSnapshot.target : null
   readonly property string selectedRoomUid: serviceSnapshot
     ? String(serviceSnapshot.selectedAnchorRoomUid || "") : ""
@@ -612,6 +616,33 @@ BarWidget {
         wrapMode: Text.Wrap
         font.family: root.bar.fontFamily
         font.pixelSize: Style.font.bodySmall
+      }
+
+      Toggle {
+        width: parent.width
+        visible: root.online
+        label: root.systemAudioPending
+          ? (root.sonos.systemAudioRequestedState
+            ? "Connecting system audio…" : "Stopping system audio…")
+          : "Include system audio"
+        description: root.systemAudioPending
+          ? "Updating the Sonos stream and computer output"
+          : root.systemAudio.active
+          ? "Streaming this computer to "
+            + String(root.systemAudio.roomLabel || root.roomLabel)
+            + " (short delay)"
+          : "Route this computer’s sounds to " + root.roomLabel
+        checked: root.systemAudioPending
+          ? root.sonos.systemAudioRequestedState
+          : root.systemAudio.active === true
+        enabled: !root.systemAudioPending
+        foreground: root.bar.foreground
+        accent: Color.accent
+        fontFamily: root.bar.fontFamily
+        onClicked: {
+          if (root.systemAudio.active) root.sonos.stopSystemAudio()
+          else root.sonos.startSystemAudio()
+        }
       }
 
       Column {

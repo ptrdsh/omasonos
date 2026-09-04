@@ -18,6 +18,7 @@ from .model import (
     parse_sonos_time,
 )
 from .state import PersistentState
+from .system_audio import SystemAudioError, SystemAudioRouter
 
 LOG = logging.getLogger(__name__)
 
@@ -49,11 +50,13 @@ class SonosController:
         soco_factory: Callable[[str], Any] | None = None,
         network_scan_fn: Callable[..., Any] | None = None,
         persistent_state: PersistentState | None = None,
+        system_audio_router: SystemAudioRouter | None = None,
     ) -> None:
         self._discover_fn = discover_fn
         self._soco_factory = soco_factory
         self._network_scan_fn = network_scan_fn
         self.state = persistent_state or PersistentState.load()
+        self.system_audio_router = system_audio_router or SystemAudioRouter()
         self._zones: dict[str, Any] = {}
         self._target_group: Any | None = None
         self._target_household_id = ""
@@ -95,6 +98,7 @@ class SonosController:
                 "unsupported": 0,
                 "error": "",
             },
+            "systemAudio": {"active": False, "roomLabel": "", "url": ""},
             "playback": {
                 "state": "STOPPED",
                 "title": "",
@@ -519,6 +523,7 @@ class SonosController:
             "target": target,
             "favorites": dict(self._favorites_model),
             "playback": playback,
+            "systemAudio": self.system_audio_router.status(),
         }
         return self._last_snapshot
 
@@ -1226,6 +1231,48 @@ class SonosController:
 
     def seek(self, position_sec: Any) -> None:
         self._coordinator().seek(format_sonos_time(max(0, int(position_sec))))
+
+    def start_system_audio(self) -> None:
+        coordinator = self._coordinator()
+        speaker_ip = str(getattr(coordinator, "ip_address", "") or "")
+        if not speaker_ip:
+            raise ControllerError("The active Sonos room has no reachable address")
+        room_label = str(
+            (self._last_snapshot.get("target") or {}).get("roomLabel")
+            or self._zone_name(coordinator)
+        )
+        try:
+            url = self.system_audio_router.start(
+                speaker_ip=speaker_ip, room_label=room_label
+            )
+            # A complete HTTP URL must be passed through unchanged. SoCo's
+            # force_radio mode prepends x-rincon-mp3radio:// and can produce
+            # an invalid x-rincon-mp3radio://http://... URI on current Sonos.
+            coordinator.play_uri(uri=url, title="System audio", start=True)
+            if not self.system_audio_router.wait_for_client():
+                try:
+                    coordinator.stop()
+                except Exception:  # noqa: BLE001 - preserve the useful cause
+                    pass
+                raise ControllerError(
+                    "Sonos could not reach this computer on TCP port 1499. "
+                    "Allow that port from your Sonos speakers in the firewall."
+                )
+        except Exception as exc:
+            self.system_audio_router.stop()
+            if isinstance(exc, (ControllerError, SystemAudioError)):
+                raise ControllerError(str(exc)) from exc
+            raise
+
+    def stop_system_audio(self) -> None:
+        if self.system_audio_router.running:
+            try:
+                self._coordinator().stop()
+            finally:
+                self.system_audio_router.stop()
+
+    def close(self) -> None:
+        self.system_audio_router.stop()
 
     def set_group_volume(self, volume: Any) -> None:
         if self._target_group is None:

@@ -88,6 +88,9 @@ class FakeZone:
     def pause(self):
         self._transport = "PAUSED_PLAYBACK"
 
+    def stop(self):
+        self._transport = "STOPPED"
+
     def next(self):
         pass
 
@@ -1059,3 +1062,58 @@ def test_discovery_skips_ssdp_wait_when_cached_host_responds():
             "reason": "already-found",
         },
     ]
+
+
+class FakeSystemAudioRouter:
+    def __init__(self, connects=True):
+        self.running = False
+        self.connects = connects
+        self.start_args = None
+        self.stopped = False
+
+    def status(self):
+        return {"active": self.running, "roomLabel": "", "url": ""}
+
+    def start(self, **kwargs):
+        self.start_args = kwargs
+        self.running = True
+        return "http://10.0.0.1:1499/system-audio.mp3"
+
+    def wait_for_client(self, timeout=8.0):
+        return self.connects
+
+    def stop(self):
+        self.running = False
+        self.stopped = True
+
+
+def test_system_audio_uses_plain_http_uri_and_waits_for_sonos(tmp_path):
+    controller, living, _, _ = make_controller(tmp_path)
+    router = FakeSystemAudioRouter()
+    controller.system_audio_router = router
+    controller.refresh()
+
+    controller.start_system_audio()
+
+    assert router.start_args == {
+        "speaker_ip": "10.0.0.2",
+        "room_label": "Kitchen + Living Room",
+    }
+    assert living.played_uri == {
+        "uri": "http://10.0.0.1:1499/system-audio.mp3",
+        "title": "System audio",
+        "start": True,
+    }
+
+
+def test_system_audio_reports_firewall_failure_and_restores_audio(tmp_path):
+    controller, living, _, _ = make_controller(tmp_path)
+    router = FakeSystemAudioRouter(connects=False)
+    controller.system_audio_router = router
+    controller.refresh()
+
+    with pytest.raises(ControllerError, match="TCP port 1499"):
+        controller.start_system_audio()
+
+    assert living._transport == "STOPPED"
+    assert router.stopped is True

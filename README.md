@@ -23,6 +23,8 @@ without requiring Sonos cloud credentials.
 - Event-driven updates with an automatic polling fallback when Sonos cannot
   reach the local callback listener.
 - Cached speaker discovery and remembered room selection across restarts.
+- One-click routing of all PipeWire/PulseAudio system sound to the active Sonos
+  room, with automatic restoration of the previous computer output on stop.
 
 ## Architecture
 
@@ -49,10 +51,11 @@ The plugin ID is `io.github.ctl0v0.omasonos`.
 
 - Omarchy Quattro with the current shell plugin commands.
 - Sonos S2 speakers reachable from the same local network.
-- Python 3.14 with `venv`, Bash, `flock`, `sha256sum`, and Internet access on the
+- Python 3.14 with `venv`, Bash, `flock`, `sha256sum`, `pactl`, `ffmpeg`, and Internet access on the
   first backend start to install the hash-locked Python dependencies.
 - A network policy that permits HTTP/UPnP access to the speakers and, for live
-  events, speaker callbacks to this machine on TCP ports `1400-1499`.
+  events and system-audio streaming, speaker access to this machine on TCP
+  ports `1400-1499`.
 
 The direct runtime dependencies are [SoCo 0.31.2](https://github.com/SoCo/SoCo)
 and [Requests 2.34.2](https://requests.readthedocs.io/). All transitive Python
@@ -78,6 +81,26 @@ ${XDG_STATE_HOME:-~/.local/state}/io.github.ctl0v0.omasonos/state.json
 ```
 
 No Sonos account credentials or cloud tokens are requested or stored.
+
+### Firewall setup for system audio
+
+System-audio routing requires the active Sonos coordinator to connect back to
+this computer on TCP port `1499`. If UFW blocks incoming connections, first let
+OmaSonos discover the speakers and then run:
+
+```bash
+./scripts/configure-firewall.sh
+```
+
+The helper adds one narrow rule per discovered speaker address; it does not
+open the port to the whole LAN. Remove those rules with:
+
+```bash
+./scripts/configure-firewall.sh remove
+```
+
+Users of another firewall should allow TCP `1499` from their Sonos speaker
+addresses. DHCP reservations are recommended so those addresses remain valid.
 
 ## Update
 
@@ -117,6 +140,12 @@ configuration or delete Sonos Favorites.
 - `Control different audio` changes which independent Sonos session is targeted.
 - `Favorites` starts a compatible saved Sonos Favorite.
 - `Group settings` stages and applies room membership changes.
+- `Route system audio` creates a temporary desktop output and streams its mix to
+  the active Sonos group. Stop routing to restore the prior default output.
+
+System audio is encoded as a LAN MP3 stream on TCP port `1499`. Sonos buffering therefore adds a
+short delay, so this is intended for music and general listening rather than
+lip-synced video or games.
 
 Transport buttons honor the actions reported by Sonos. Seek is shown only for a
 source that reports `SeekTime` and a duration.
@@ -164,6 +193,7 @@ validation commands, and dependency update process.
   found through cached hosts or the attached-network fallback but are not yet a
   guaranteed discovery path.
 - Sonos S1 hardware is not currently supported or tested.
+- System-audio routing needs an explicit host-firewall allowance on TCP `1499`.
 
 ## License
 
