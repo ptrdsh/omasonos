@@ -373,25 +373,16 @@ BarWidget {
       Flickable {
         id: panelScroll
         anchors.fill: parent
-        readonly property bool needsScrollBar: content.implicitHeight > height
-        readonly property real scrollGutter: needsScrollBar
-          ? Math.max(verticalScrollBar.implicitWidth, Style.space(8)) + Style.space(6)
-          : 0
         contentWidth: content.width
         contentHeight: content.implicitHeight
         clip: true
         boundsBehavior: Flickable.StopAtBounds
         flickableDirection: Flickable.VerticalFlick
         interactive: contentHeight > height
-        ScrollBar.vertical: ScrollBar {
-          id: verticalScrollBar
-          policy: panelScroll.needsScrollBar
-            ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
-        }
 
         Column {
           id: content
-          width: panelScroll.width - panelScroll.scrollGutter
+          width: panelScroll.width
           spacing: Style.spacing.panelGap
 
       Row {
