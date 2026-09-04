@@ -20,6 +20,8 @@
   transition, with immediate UI feedback instead of a general media handoff.
 - Keep the short controller panel visually centered by hiding its scrollbar;
   wheel, touchpad, drag, and keyboard scrolling remain available.
+- Demote system-audio routing to a compact switch in the top-right of the
+  now-playing header so Sonos playback remains the controller's visual focus.
 - Show immediate connecting/stopping feedback while a routing request is in
   progress.
 

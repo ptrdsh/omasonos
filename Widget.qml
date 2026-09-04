@@ -18,6 +18,11 @@ BarWidget {
     && sonos.systemAudioRequestId !== ""
   readonly property bool systemAudioRoomChange: root.movePending
     && root.systemAudio.active === true
+  readonly property bool systemAudioVisualChecked: root.systemAudioRoomChange
+    ? false
+    : root.systemAudioPending
+      ? root.sonos.systemAudioRequestedState
+      : root.systemAudio.active === true
   readonly property bool firewallHelpNeeded: !!sonos
     && String(sonos.lastError || "").indexOf("TCP port 1499") !== -1
   readonly property var target: serviceSnapshot ? serviceSnapshot.target : null
@@ -416,37 +421,78 @@ BarWidget {
           }
         }
 
-        Column {
+        Item {
           width: parent.width - Style.space(80)
-          spacing: Style.space(3)
+          height: Style.space(68)
 
-          Text {
-            width: parent.width
-            text: root.online ? root.displayTitle : root.disconnectedTitle
-            color: root.bar.foreground
-            font.family: root.bar.fontFamily
-            font.pixelSize: Style.font.subtitle
-            font.bold: true
-            elide: Text.ElideRight
+          Column {
+            anchors.left: parent.left
+            anchors.right: systemAudioSwitch.left
+            anchors.rightMargin: Style.space(5)
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: Style.space(3)
+
+            Text {
+              width: parent.width
+              text: root.online ? root.displayTitle : root.disconnectedTitle
+              color: root.bar.foreground
+              font.family: root.bar.fontFamily
+              font.pixelSize: Style.font.subtitle
+              font.bold: true
+              elide: Text.ElideRight
+            }
+            Text {
+              width: parent.width
+              text: root.artist
+              visible: text !== ""
+              color: Qt.darker(root.bar.foreground, 1.35)
+              font.family: root.bar.fontFamily
+              font.pixelSize: Style.font.bodySmall
+              elide: Text.ElideRight
+            }
+            Text {
+              width: parent.width
+              text: root.online
+                ? root.roomLabel + (root.playback.source ? " · " + root.playback.source : "")
+                : "Local network connection"
+              color: Qt.darker(root.bar.foreground, 1.55)
+              font.family: root.bar.fontFamily
+              font.pixelSize: Style.font.caption
+              elide: Text.ElideRight
+            }
           }
-          Text {
-            width: parent.width
-            text: root.artist
-            visible: text !== ""
-            color: Qt.darker(root.bar.foreground, 1.35)
-            font.family: root.bar.fontFamily
-            font.pixelSize: Style.font.bodySmall
-            elide: Text.ElideRight
-          }
-          Text {
-            width: parent.width
-            text: root.online
-              ? root.roomLabel + (root.playback.source ? " · " + root.playback.source : "")
-              : "Local network connection"
-            color: Qt.darker(root.bar.foreground, 1.55)
-            font.family: root.bar.fontFamily
-            font.pixelSize: Style.font.caption
-            elide: Text.ElideRight
+
+          ToggleSwitch {
+            id: systemAudioSwitch
+            anchors.right: parent.right
+            anchors.top: parent.top
+            visible: root.online
+            checked: root.systemAudioVisualChecked
+            busy: root.systemAudioPending || root.movePending
+            trackHeight: 16
+            trackWidth: 30
+            knobSize: 12
+            knobInset: 2
+            cursorPad: 3
+            foreground: root.bar.foreground
+            accent: Color.accent
+            onToggled: {
+              if (root.systemAudio.active) root.sonos.stopSystemAudio()
+              else root.sonos.startSystemAudio()
+            }
+
+            PanelToolTip {
+              visible: systemAudioSwitch.containsMouse
+              text: root.systemAudioRoomChange
+                ? "Stopping system audio before changing rooms…"
+                : root.systemAudioPending
+                  ? (root.sonos.systemAudioRequestedState
+                    ? "Connecting system audio…" : "Stopping system audio…")
+                  : root.systemAudio.active
+                    ? "Stop including this computer’s audio"
+                    : "Include this computer’s audio on " + root.roomLabel
+              fontFamily: root.bar.fontFamily
+            }
           }
         }
       }
@@ -629,39 +675,6 @@ BarWidget {
         enabled: !root.systemAudioPending
         tooltipText: "Authorize UFW access on TCP 1499 for discovered Sonos speakers only"
         onClicked: root.sonos.configureFirewallAndStartSystemAudio()
-      }
-
-      Toggle {
-        width: parent.width
-        visible: root.online
-        label: root.systemAudioRoomChange
-          ? "Stopping system audio…"
-          : root.systemAudioPending
-          ? (root.sonos.systemAudioRequestedState
-            ? "Connecting system audio…" : "Stopping system audio…")
-          : "Include system audio"
-        description: root.systemAudioRoomChange
-          ? "Restoring this computer before changing rooms"
-          : root.systemAudioPending
-          ? "Updating the Sonos stream and computer output"
-          : root.systemAudio.active
-          ? "Streaming this computer to "
-            + String(root.systemAudio.roomLabel || root.roomLabel)
-            + " (short delay)"
-          : "Route this computer’s sounds to " + root.roomLabel
-        checked: root.systemAudioRoomChange
-          ? false
-          : root.systemAudioPending
-          ? root.sonos.systemAudioRequestedState
-          : root.systemAudio.active === true
-        enabled: !root.systemAudioPending && !root.movePending
-        foreground: root.bar.foreground
-        accent: Color.accent
-        fontFamily: root.bar.fontFamily
-        onClicked: {
-          if (root.systemAudio.active) root.sonos.stopSystemAudio()
-          else root.sonos.startSystemAudio()
-        }
       }
 
       Column {
