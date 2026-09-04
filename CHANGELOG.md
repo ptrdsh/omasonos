@@ -18,6 +18,8 @@
   automatically after the rules are added.
 - Make room changes while system audio is active an explicit fast stop-and-select
   transition, with immediate UI feedback instead of a general media handoff.
+- Reserve a dedicated gutter for the panel scrollbar so it no longer overlays
+  controls and text.
 - Show immediate connecting/stopping feedback while a routing request is in
   progress.
 
