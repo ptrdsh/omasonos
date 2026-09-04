@@ -1117,3 +1117,19 @@ def test_system_audio_reports_firewall_failure_and_restores_audio(tmp_path):
 
     assert living._transport == "STOPPED"
     assert router.stopped is True
+
+
+def test_room_change_stops_system_audio_and_only_selects_new_room(tmp_path):
+    controller, living, _, _ = make_controller(tmp_path)
+    router = FakeSystemAudioRouter()
+    router.running = True
+    controller.system_audio_router = router
+    living._transport = "PLAYING"
+    controller.refresh()
+
+    controller.move_playback_to_room("R2")
+
+    assert living._transport == "STOPPED"
+    assert router.stopped is True
+    assert controller.state.selected_room_uid == "R2"
+    assert not hasattr(living, "played_uri")

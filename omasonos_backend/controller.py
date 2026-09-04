@@ -1426,7 +1426,15 @@ class SonosController:
         dismantle that group as a side effect; those changes belong to the
         explicit group-settings operation.
         """
-        snapshot = self.refresh(rediscover=False)
+        # System audio is a computer-owned live stream, not a seekable Sonos
+        # session. Changing rooms deliberately turns that routing off and
+        # selects the new control target; treating it as a regular handoff
+        # causes a long, confusing pause/reconnect sequence.
+        snapshot = (
+            self._last_snapshot
+            if self.system_audio_router.running
+            else self.refresh(rediscover=False)
+        )
         target = snapshot.get("target")
         if not target:
             raise ControllerError("No target Sonos group is available")
@@ -1443,6 +1451,15 @@ class SonosController:
             room.get("uid") for room in household.get("rooms", [])
         }:
             raise ControllerError("The selected room is unavailable")
+
+        if self.system_audio_router.running:
+            try:
+                self._coordinator().stop()
+            finally:
+                self.system_audio_router.stop()
+            self.state.selected_room_uid = room_uid
+            self._save_state_quietly()
+            return
 
         source_was_playing = str(
             snapshot.get("playback", {}).get("state", "")

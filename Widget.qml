@@ -16,6 +16,8 @@ BarWidget {
     ? serviceSnapshot.systemAudio : ({ active: false })
   readonly property bool systemAudioPending: !!sonos
     && sonos.systemAudioRequestId !== ""
+  readonly property bool systemAudioRoomChange: root.movePending
+    && root.systemAudio.active === true
   readonly property bool firewallHelpNeeded: !!sonos
     && String(sonos.lastError || "").indexOf("TCP port 1499") !== -1
   readonly property var target: serviceSnapshot ? serviceSnapshot.target : null
@@ -636,21 +638,27 @@ BarWidget {
       Toggle {
         width: parent.width
         visible: root.online
-        label: root.systemAudioPending
+        label: root.systemAudioRoomChange
+          ? "Stopping system audio…"
+          : root.systemAudioPending
           ? (root.sonos.systemAudioRequestedState
             ? "Connecting system audio…" : "Stopping system audio…")
           : "Include system audio"
-        description: root.systemAudioPending
+        description: root.systemAudioRoomChange
+          ? "Restoring this computer before changing rooms"
+          : root.systemAudioPending
           ? "Updating the Sonos stream and computer output"
           : root.systemAudio.active
           ? "Streaming this computer to "
             + String(root.systemAudio.roomLabel || root.roomLabel)
             + " (short delay)"
           : "Route this computer’s sounds to " + root.roomLabel
-        checked: root.systemAudioPending
+        checked: root.systemAudioRoomChange
+          ? false
+          : root.systemAudioPending
           ? root.sonos.systemAudioRequestedState
           : root.systemAudio.active === true
-        enabled: !root.systemAudioPending
+        enabled: !root.systemAudioPending && !root.movePending
         foreground: root.bar.foreground
         accent: Color.accent
         fontFamily: root.bar.fontFamily
@@ -669,7 +677,8 @@ BarWidget {
           width: parent.width
           focusable: true
           text: root.movePending
-            ? (root.playing ? "Moving audio…" : "Changing room…")
+            ? (root.systemAudioRoomChange ? "Stopping audio and changing room…"
+              : (root.playing ? "Moving audio…" : "Changing room…"))
             : (root.playing ? "Playing on: " : "Active room: ") + root.roomLabel
           iconText: root.movePending ? "󰑓" : "󰓃"
           foreground: root.bar.foreground

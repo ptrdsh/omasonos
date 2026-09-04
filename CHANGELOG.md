@@ -16,6 +16,8 @@
   speaker cannot connect to the fixed TCP `1499` stream.
 - Offer an in-panel, explicitly authorized UFW setup action and retry routing
   automatically after the rules are added.
+- Make room changes while system audio is active an explicit fast stop-and-select
+  transition, with immediate UI feedback instead of a general media handoff.
 - Show immediate connecting/stopping feedback while a routing request is in
   progress.
 
