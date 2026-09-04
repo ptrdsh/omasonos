@@ -22,6 +22,8 @@
   wheel, touchpad, drag, and keyboard scrolling remain available.
 - Present computer-audio routing as a compact pressed-state icon beside
   Favorites, keeping Sonos playback as the controller's visual focus.
+- Keep the Favorites refresh action visually paired by placing computer-audio
+  routing first, with an audio-output glyph instead of a display glyph.
 - Show immediate connecting/stopping feedback while a routing request is in
   progress.
 

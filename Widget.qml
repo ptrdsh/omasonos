@@ -785,26 +785,10 @@ BarWidget {
           spacing: Style.space(6)
 
           Button {
-            width: parent.width - systemAudioButton.width
-              - refreshFavoritesButton.width - parent.spacing * 2
-            focusable: true
-            text: root.favoritesOpen
-              ? "Hide Favorites"
-              : "Favorites" + (root.favorites.items.length > 0
-                ? "  ·  " + root.favorites.items.length : "")
-            iconText: "󰓎"
-            foreground: root.bar.foreground
-            bordered: true
-            leftAlign: true
-            active: root.favoritesOpen
-            onClicked: root.favoritesOpen = !root.favoritesOpen
-          }
-
-          Button {
             id: systemAudioButton
             focusable: true
             iconText: root.systemAudioPending || root.systemAudioRoomChange
-              ? "󰑓" : "󰍹"
+              ? "󰑓" : "󰕾"
             foreground: root.bar.foreground
             active: root.systemAudioVisualChecked
             enabled: !root.systemAudioPending && !root.movePending
@@ -820,6 +804,22 @@ BarWidget {
               if (root.systemAudio.active) root.sonos.stopSystemAudio()
               else root.sonos.startSystemAudio()
             }
+          }
+
+          Button {
+            width: parent.width - systemAudioButton.width
+              - refreshFavoritesButton.width - parent.spacing * 2
+            focusable: true
+            text: root.favoritesOpen
+              ? "Hide Favorites"
+              : "Favorites" + (root.favorites.items.length > 0
+                ? "  ·  " + root.favorites.items.length : "")
+            iconText: "󰓎"
+            foreground: root.bar.foreground
+            bordered: true
+            leftAlign: true
+            active: root.favoritesOpen
+            onClicked: root.favoritesOpen = !root.favoritesOpen
           }
 
           Button {
