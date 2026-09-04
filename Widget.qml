@@ -421,78 +421,37 @@ BarWidget {
           }
         }
 
-        Item {
+        Column {
           width: parent.width - Style.space(80)
-          height: Style.space(68)
+          spacing: Style.space(3)
 
-          Column {
-            anchors.left: parent.left
-            anchors.right: systemAudioSwitch.left
-            anchors.rightMargin: Style.space(5)
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: Style.space(3)
-
-            Text {
-              width: parent.width
-              text: root.online ? root.displayTitle : root.disconnectedTitle
-              color: root.bar.foreground
-              font.family: root.bar.fontFamily
-              font.pixelSize: Style.font.subtitle
-              font.bold: true
-              elide: Text.ElideRight
-            }
-            Text {
-              width: parent.width
-              text: root.artist
-              visible: text !== ""
-              color: Qt.darker(root.bar.foreground, 1.35)
-              font.family: root.bar.fontFamily
-              font.pixelSize: Style.font.bodySmall
-              elide: Text.ElideRight
-            }
-            Text {
-              width: parent.width
-              text: root.online
-                ? root.roomLabel + (root.playback.source ? " · " + root.playback.source : "")
-                : "Local network connection"
-              color: Qt.darker(root.bar.foreground, 1.55)
-              font.family: root.bar.fontFamily
-              font.pixelSize: Style.font.caption
-              elide: Text.ElideRight
-            }
+          Text {
+            width: parent.width
+            text: root.online ? root.displayTitle : root.disconnectedTitle
+            color: root.bar.foreground
+            font.family: root.bar.fontFamily
+            font.pixelSize: Style.font.subtitle
+            font.bold: true
+            elide: Text.ElideRight
           }
-
-          ToggleSwitch {
-            id: systemAudioSwitch
-            anchors.right: parent.right
-            anchors.top: parent.top
-            visible: root.online
-            checked: root.systemAudioVisualChecked
-            busy: root.systemAudioPending || root.movePending
-            trackHeight: 16
-            trackWidth: 30
-            knobSize: 12
-            knobInset: 2
-            cursorPad: 3
-            foreground: root.bar.foreground
-            accent: Color.accent
-            onToggled: {
-              if (root.systemAudio.active) root.sonos.stopSystemAudio()
-              else root.sonos.startSystemAudio()
-            }
-
-            PanelToolTip {
-              visible: systemAudioSwitch.containsMouse
-              text: root.systemAudioRoomChange
-                ? "Stopping system audio before changing rooms…"
-                : root.systemAudioPending
-                  ? (root.sonos.systemAudioRequestedState
-                    ? "Connecting system audio…" : "Stopping system audio…")
-                  : root.systemAudio.active
-                    ? "Stop including this computer’s audio"
-                    : "Include this computer’s audio on " + root.roomLabel
-              fontFamily: root.bar.fontFamily
-            }
+          Text {
+            width: parent.width
+            text: root.artist
+            visible: text !== ""
+            color: Qt.darker(root.bar.foreground, 1.35)
+            font.family: root.bar.fontFamily
+            font.pixelSize: Style.font.bodySmall
+            elide: Text.ElideRight
+          }
+          Text {
+            width: parent.width
+            text: root.online
+              ? root.roomLabel + (root.playback.source ? " · " + root.playback.source : "")
+              : "Local network connection"
+            color: Qt.darker(root.bar.foreground, 1.55)
+            font.family: root.bar.fontFamily
+            font.pixelSize: Style.font.caption
+            elide: Text.ElideRight
           }
         }
       }
@@ -826,7 +785,8 @@ BarWidget {
           spacing: Style.space(6)
 
           Button {
-            width: parent.width - refreshFavoritesButton.width - parent.spacing
+            width: parent.width - systemAudioButton.width
+              - refreshFavoritesButton.width - parent.spacing * 2
             focusable: true
             text: root.favoritesOpen
               ? "Hide Favorites"
@@ -838,6 +798,28 @@ BarWidget {
             leftAlign: true
             active: root.favoritesOpen
             onClicked: root.favoritesOpen = !root.favoritesOpen
+          }
+
+          Button {
+            id: systemAudioButton
+            focusable: true
+            iconText: root.systemAudioPending || root.systemAudioRoomChange
+              ? "󰑓" : "󰍹"
+            foreground: root.bar.foreground
+            active: root.systemAudioVisualChecked
+            enabled: !root.systemAudioPending && !root.movePending
+            tooltipText: root.systemAudioRoomChange
+              ? "Stopping computer audio before changing rooms…"
+              : root.systemAudioPending
+                ? (root.sonos.systemAudioRequestedState
+                  ? "Connecting computer audio…" : "Stopping computer audio…")
+                : root.systemAudio.active
+                  ? "Stop streaming this computer to Sonos"
+                  : "Stream this computer’s audio to " + root.roomLabel
+            onClicked: {
+              if (root.systemAudio.active) root.sonos.stopSystemAudio()
+              else root.sonos.startSystemAudio()
+            }
           }
 
           Button {
